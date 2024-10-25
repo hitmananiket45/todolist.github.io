@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add in your styles.css or Tailwind CSS config */
+.dark-mode {
+    background-color: #2d3748; /* Dark background */
+    color: #fff; /* Light text */
+  }
+  
+  
