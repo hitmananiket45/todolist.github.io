@@ -232,7 +232,7 @@ const App = () => {
     aria-label="Task Sorting"
     className="ml-2 px-2 py-1 bg-gray-200 dark:bg-gray-600 dark:text-white text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
   >
-    <option value="Default">Choose Sorting</option>
+    <option value="Default">Default</option>
     <option value="Priority">Priority</option>
     <option value="Due Date">Due Date</option>
   </select>
