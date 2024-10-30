@@ -7,10 +7,21 @@ const App = () => {
   const [inputValue, setInputValue] = useState('');
   const [priority, setPriority] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [filter, setFilter] = useState('All');
   const [sortOption, setSortOption] = useState('Default');
   const [loading, setLoading] = useState(false);
-  const [editingIndex, setEditingIndex] = useState(null); // Track the index of the task being edited
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [category, setCategory] = useState('');
+  const [filter, setFilter] = useState('All');
+
+  const categories = ['Work', 'Personal', 'Urgent', 'Other'];
+
+  // Define colors for each category
+  const categoryColors = {
+    Work: 'text-blue-400',
+    Personal: 'text-green-400',
+    Urgent: 'text-red-400',
+    Other: 'text-brown-600', // Updated to a more visible dark yellow/orange
+  };  
 
   useEffect(() => {
     const savedTasks = JSON.parse(localStorage.getItem('tasks'));
@@ -27,13 +38,14 @@ const App = () => {
   };
 
   const handleAddTask = async () => {
-    if (inputValue && priority) {
+    if (inputValue && priority && category) {
       setLoading(true);
       await new Promise((resolve) => setTimeout(resolve, 500));
-      setTasks([...tasks, { text: inputValue, completed: false, priority, dueDate }]);
+      setTasks([...tasks, { text: inputValue, completed: false, priority, dueDate, category }]);
       setInputValue('');
       setPriority('');
       setDueDate('');
+      setCategory('');
       setLoading(false);
     }
   };
@@ -61,18 +73,20 @@ const App = () => {
     setInputValue(tasks[index].text);
     setPriority(tasks[index].priority);
     setDueDate(tasks[index].dueDate);
-    setEditingIndex(index); // Set the index for the task being edited
+    setCategory(tasks[index].category);
+    setEditingIndex(index);
   };
 
   const handleSaveEdit = () => {
     if (editingIndex !== null) {
       const newTasks = [...tasks];
-      newTasks[editingIndex] = { ...newTasks[editingIndex], text: inputValue, priority, dueDate };
+      newTasks[editingIndex] = { ...newTasks[editingIndex], text: inputValue, priority, dueDate, category };
       setTasks(newTasks);
       setInputValue('');
       setPriority('');
       setDueDate('');
-      setEditingIndex(null); // Reset editing index
+      setCategory('');
+      setEditingIndex(null);
     }
   };
 
@@ -92,6 +106,7 @@ const App = () => {
   const filteredAndSortedTasks = sortTasks(tasks.filter(task => {
     if (filter === 'Completed') return task.completed;
     if (filter === 'Active') return !task.completed;
+    if (filter !== 'All') return task.category === filter;
     return true;
   }));
 
@@ -111,7 +126,7 @@ const App = () => {
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900'} flex flex-col items-center py-10`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-800 text-gray-200' : 'bg-gray-100 text-gray-900'} flex flex-col items-center py-10`}>
       <button 
         onClick={toggleDarkMode} 
         aria-label="Toggle Dark Mode"
@@ -147,6 +162,17 @@ const App = () => {
                 <option value="Medium">Medium</option>
                 <option value="High">High</option>
               </select>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                aria-label="Select Task Category"
+                className="mr-2 px-2 py-1 bg-gray-200 dark:bg-gray-600 dark:text-white text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Category</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
               <input
                 type="date"
                 value={dueDate}
@@ -165,30 +191,53 @@ const App = () => {
             </button>
           </div>
           <div className="flex justify-between mb-4">
-            <button onClick={() => setFilter('All')} className={`px-4 py-2 rounded-lg ${filter === 'All' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'} transition`}>
-              All
-            </button>
-            <button onClick={() => setFilter('Active')} className={`px-4 py-2 rounded-lg ${filter === 'Active' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'} transition`}>
-              Active
-            </button>
-            <button onClick={() => setFilter('Completed')} className={`px-4 py-2 rounded-lg ${filter === 'Completed' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'} transition`}>
-              Completed
-            </button>
-          </div>
-          <div className="flex justify-between mb-4">
-          <label className={`text-label ${darkMode ? 'text-gray-100' : 'text-gray-800 font-semibold'}`}> Task Names:
-          </label>
-          <select
-          value={sortOption}
-          onChange={(e) => setSortOption(e.target.value)}
-          aria-label="Task Sorting"
-          className="ml-2 px-2 py-1 bg-gray-200 dark:bg-gray-600 dark:text-white text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="Default">Choose Sorting</option>
-            <option value="Priority">Priority</option>
-            <option value="Due Date">Due Date</option>
-            </select>
-            </div>
+  <button 
+    onClick={() => setFilter('All')} 
+    className={`px-4 py-2 rounded-lg ${filter === 'All' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'} transition`}
+  >
+    All
+  </button>
+  {categories.map((cat) => (
+    <button 
+      key={cat} 
+      onClick={() => setFilter(cat)} 
+      className={`px-4 py-2 rounded-lg ${filter === cat ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'} transition`}
+    >
+      {cat}
+    </button>
+  ))}
+</div>
+
+{/* New Div for Completed and Active Buttons */}
+<div className="flex justify-center mb-4">
+  <button 
+    onClick={() => setFilter('Active')} 
+    className={`mx-2 px-4 py-2 rounded-lg ${filter === 'Active' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'} transition`}
+  >
+    Active
+  </button>
+  <button 
+    onClick={() => setFilter('Completed')} 
+    className={`mx-2 px-4 py-2 rounded-lg ${filter === 'Completed' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'} transition`}
+  >
+    Completed
+  </button>
+</div>
+
+<div className="mb-4 text-center">
+  <label className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`} htmlFor="sort">Sort By:</label>
+  <select
+    value={sortOption}
+    onChange={(e) => setSortOption(e.target.value)}
+    aria-label="Task Sorting"
+    className="ml-2 px-2 py-1 bg-gray-200 dark:bg-gray-600 dark:text-white text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="Default">Choose Sorting</option>
+    <option value="Priority">Priority</option>
+    <option value="Due Date">Due Date</option>
+  </select>
+</div>
+
 
           {loading ? (
             <p>Loading...</p>
@@ -197,9 +246,18 @@ const App = () => {
               {filteredAndSortedTasks.map((task, index) => (
                 <li key={index} className="flex justify-between items-center p-2 border-b">
                   <div className="flex flex-col">
-                    <span className={`${task.completed ? 'line-through' : ''}`}>{task.text}</span>
-                    <span className={`${priorityColors[task.priority]} text-sm`}>{task.priority} Priority</span>
-                    <span className={`${checkDueDateStatus(task.dueDate)} text-sm`}>{task.dueDate || 'No Due Date'}</span>
+                    <span className={`${task.completed ? 'line-through text-gray-400' : ''}`}>
+                      {task.text}
+                    </span>
+                    <span className={`${priorityColors[task.priority]} text-sm`}>
+                      {task.priority} Priority
+                    </span>
+                    <span className={`${checkDueDateStatus(task.dueDate)} text-sm`}>
+                      {task.dueDate || 'No Due Date'}
+                    </span>
+                    <span className={`text-sm ${categoryColors[task.category]}`}>
+                      {task.category} Category
+                    </span>
                   </div>
                   <div>
                     <button onClick={() => toggleTaskCompletion(index)} aria-label="Toggle Task Completion" className={`px-2 py-1 ${task.completed ? 'bg-gray-400' : 'bg-green-500'} text-white rounded-lg`}>✓</button>
@@ -211,10 +269,15 @@ const App = () => {
             </ul>
           )}
           {tasks.length > 0 && (
-            <button onClick={clearCompletedTasks} className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-700 transition">
-              Clear Completed Tasks
-            </button>
-          )}
+  <div className="flex justify-center mb-4">
+    <button 
+      onClick={clearCompletedTasks} 
+      className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-700 transition"
+    >
+      Clear Completed Tasks
+    </button>
+  </div>
+)}
         </div>
       </div>
     </div>
